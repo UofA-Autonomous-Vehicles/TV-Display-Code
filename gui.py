@@ -30,13 +30,27 @@ class simpleapp_tk(threading.Thread):
         self.altitude_value = Tkinter.Label(self.root,font=("Courier", 16), textvariable=self.altitude)
         self.altitude_value.grid(row=2, column=1, sticky='W')
 		
-		#Ground Speed display
+        #Ground (Horizontal) Speed display
         self.ground_speed = Tkinter.StringVar()
-        self.ground_speed_label = Tkinter.Label(self.root,font=("Courier", 16), text="Ground Speed:")
+        self.ground_speed_label = Tkinter.Label(self.root,font=("Courier", 16), text="Horizontal Speed:")
         self.ground_speed_label.grid(row=3, sticky='E')
         self.ground_speed_value = Tkinter.Label(self.root,font=("Courier", 16), textvariable=self.ground_speed)
         self.ground_speed_value.grid(row=3, column=1, sticky='W')
-        
+		
+		#Vertical Speed
+        self.vertical_speed = Tkinter.StringVar()
+        self.vertical_speed_label = Tkinter.Label(self.root,font=("Courier", 16), text="Vertical Speed:")
+        self.vertical_speed_label.grid(row=4, sticky='E')
+        self.vertical_speed_value = Tkinter.Label(self.root,font=("Courier", 16), textvariable=self.vertical_speed)
+        self.vertical_speed_value.grid(row=4, column=1, sticky='W')
+		
+		#Distance to the Next Waypoint (Distance used in navigation)
+        self.distance_to_next_waypoint = Tkinter.StringVar()
+        self.distance_to_next_waypoint_label = Tkinter.Label(self.root,font=("Courier", 16), text="Distance to the Next Waypoint:")
+        self.distance_to_next_waypoint_label.grid(row=5, sticky='E')
+        self.distance_to_next_waypoint_value = Tkinter.Label(self.root,font=("Courier", 16), textvariable=self.distance_to_next_waypoint)
+        self.distance_to_next_waypoint_value.grid(row=5, column=1, sticky='W')
+		        
         threading.Thread.__init__(self)
 
     def run(self):
@@ -50,7 +64,7 @@ if __name__ == "__main__":
     app.start()
     while True:
         msg = data.recv_match();
-        size = int(math.ceil(app.root.winfo_height()/7.25))
+        size = int(math.ceil(app.root.winfo_height()/10))	#7.25
         app.ARML.config(font=("Courier", size))
         app.mode_label.config(font=("Courier", size))
         app.mode_value.config(font=("Courier", size))
@@ -58,6 +72,12 @@ if __name__ == "__main__":
         app.altitude_value.config(font=("Courier", size))
         app.ground_speed_label.config(font=("Courier", size))
         app.ground_speed_value.config(font=("Courier", size))
+        app.vertical_speed_label.config(font=("Courier", size))
+        app.vertical_speed_value.config(font=("Courier", size))
+        app.distance_to_next_waypoint_label.config(font=("Courier", size))
+        app.distance_to_next_waypoint_value.config(font=("Courier", size))
+		
+		
         #If we have a valid message
         if msg is not None:
             if msg.get_type() is "HEARTBEAT":
@@ -69,5 +89,8 @@ if __name__ == "__main__":
                     app.ARM.set("ARMED")
                     app.ARML.config(foreground="red")
             if msg.get_type() is "VFR_HUD":
-                app.altitude.set("{0:.2f}m".format(msg.alt))
-                app.ground_speed.set("{0:.2f}m/s".format(msg.groundspeed))
+				app.altitude.set("{0:.2f} feet".format(msg.alt*3.28084))					#feet
+				app.ground_speed.set("{0:.2f} knots".format(msg.groundspeed*1.943844))		#knots
+				app.vertical_speed.set("{0:.2f} feet/min".format(msg.climb*196.85))			#feet/min
+            if msg.get_type() is "NAV_CONTROLLER_OUTPUT":
+				app.distance_to_next_waypoint.set("{0:.2f} nautical miles".format(msg.wp_dist*0.000539957))		#nautical miles/metres
